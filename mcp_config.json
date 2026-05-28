@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "deepseek-ocr": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "env": {
+        "GIT_REPO_URL": "https://github.com/deepseek-ai/DeepSeek-OCR"
+      }
+    },
+    "tesseract-ocr": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "env": {
+        "GIT_REPO_URL": "https://github.com/tesseract-ocr/tesseract"
+      }
+    },
+    "tensorflow-ocr": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "env": {
+        "GIT_REPO_URL": "https://github.com/pannous/tensorflow-ocr"
+      }
+    },
+    "paddleocr": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "env": {
+        "GIT_REPO_URL": "https://github.com/PaddlePaddle/PaddleOCR"
+      }
+    }
+  }
+}

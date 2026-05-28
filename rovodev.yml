@@ -1,0 +1,16 @@
+servers:
+  DeepSeek-OCR Docs:
+    type: sse
+    url: https://gitmcp.io/deepseek-ai/DeepSeek-OCR
+
+  tesseract Docs:
+    type: sse
+    url: https://gitmcp.io/tesseract-ocr/tesseract
+
+  tensorflow-ocr Docs:
+    type: sse
+    url: https://gitmcp.io/pannous/tensorflow-ocr
+
+  PaddleOCR Docs:
+    type: sse
+    url: https://gitmcp.io/PaddlePaddle/PaddleOCR

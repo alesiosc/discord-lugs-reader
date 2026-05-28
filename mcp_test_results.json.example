@@ -1,0 +1,19 @@
+{
+  "engines": [
+    { "name": "DeepSeek-OCR Docs" },
+    { "name": "tesseract Docs" },
+    { "name": "tensorflow-ocr Docs" },
+    { "name": "PaddleOCR Docs" }
+  ],
+  "inputs": [
+    {
+      "file": "mcp_test_inputs/01_page-2025-11-07T16-21-11-665696Z.png",
+      "results": {
+        "DeepSeek-OCR Docs": { "text": "...engine output text here..." },
+        "tesseract Docs":    { "text": "...engine output text here..." },
+        "tensorflow-ocr Docs": { "text": "...engine output text here..." },
+        "PaddleOCR Docs":    { "text": "...engine output text here..." }
+      }
+    }
+  ]
+}

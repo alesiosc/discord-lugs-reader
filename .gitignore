@@ -1,0 +1,47 @@
+# Discord Lugs Reader - .gitignore
+
+# Environment files with credentials
+discord_lugs_portable_venv/app/login.env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.spec
+
+# Virtual environments
+venv*/
+discord_lugs_portable_venv/
+test_venv_311/
+
+# Browser data (contains Discord login sessions)
+browser_data*/
+tmp_rovodev_chrome_profile*/
+
+# Screenshots and debug images
+screenshots/
+debug_screenshots/
+*.png
+
+# Logs
+*.log
+snapshot.txt
+ocr_subprocess.log
+ocr_watcher.log
+discord_crash_log.txt
+discord_lugs_reader_debug.log
+
+# Build artifacts
+_MEI*/
+*.exe
+acli.exe
+
+# Node
+node_modules/
+
+# Windows reserved names
+[Nn][Uu][Ll]

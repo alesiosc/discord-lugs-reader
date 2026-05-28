@@ -1,0 +1,107 @@
+`PROMPT`
+List all the tools used in this project, including versions where available. Structure your response in the following format:
+    2 
+    3 # Tools Used in [Project Name] Project
+    4 
+    5 ## [Language/Framework] Libraries and Tools
+    6 
+    7 ### Core Libraries
+    8 - **[Tool Name] [Version]** - [Description of purpose]
+    9 - **[Tool Name] [Version]** - [Description of purpose]
+   10 
+   11 ### Development Tools
+   12 - **[Tool Name] [Version]** - [Description of purpose]
+   13 
+   14 ## [Other Relevant Category] Tools
+   15 - **[Tool Name] [Version]** - [Description of purpose]
+   16 
+   17 [Additional categories as needed]
+   18 
+   19 ## What Worked:
+   20 1. **[Tool/Feature]** - [Description of success]
+   21 2. **[Tool/Feature]** - [Description of success]
+   22 
+   23 ## What Didn't Work:
+   24 1. **[Tool/Feature]** - [Description of issue and resolution]
+   25 2. **[Tool/Feature]** - [Description of issue and resolution]
+   26 
+   27 ## [Specific Category] Functions Loaded:
+   28 - **[Specific Tool] [Version]** - [Description of purpose and usage]
+   29 - **[Specific Tool] [Version]** - [Description of purpose and usage]
+   30 
+   31 Format the response as a markdown document with clear headings and bullet points. Include version numbers where available, and provide brief descriptions of each
+      tool's purpose in the project.
+
+      =================================================================================================================================================================
+
+# Tools Used in Discord Lugs Reader Project
+
+## Python Libraries and Tools
+
+### Core Libraries
+- **Python 3.11** - Main programming language
+- **Playwright 1.40.0+** - Browser automation for accessing Discord (currently used in main code)
+- **PaddleOCR** - OCR library for extracting text from Discord screenshots
+- **requests** - HTTP requests for Discord webhook integration
+- **python-dotenv** - Environment variable management
+
+### Development Tools
+- **pip** - Python package installer
+- **venv** - Virtual environment management
+
+## JavaScript/Node.js Tools
+
+### Node.js Environment
+- **Node.js** - JavaScript runtime environment
+- **npm** - Node package manager
+- **package-lock.json** - Dependency lock file
+- **node_modules/** - Installed Node.js modules
+
+## OCR and Image Processing
+- **PaddleOCR** - Primary OCR engine (replaced pytesseract due to better accuracy)
+- **OpenCV (cv2)** - Image processing (imported but not heavily used)
+- **PIL/Pillow** - Image library (imported but not heavily used)
+
+## Browser Automation Components
+- **Chromium** - Browser engine used by Playwright
+- **Persistent Browser Context** - Maintains Discord login state
+- **Browser Data Directory** - Stores login credentials and session data
+
+## Discord Integration
+- **Discord Webhook API** - For sending messages to Discord
+- **Discord Channel URL** - Target channel for monitoring
+
+## System Components
+- **Windows Command Prompt (cmd.exe)** - Execution environment
+- **Task Scheduler/Background Processes** - For continuous monitoring
+
+## File Formats and Storage
+- **JSON** - For storing processed message tracking
+- **PNG** - Screenshot output format
+- **TXT** - Snapshot data storage format
+- **ENV** - Environment configuration
+
+## What Worked:
+1. **PaddleOCR** - Successfully replaced pytesseract and provided much better text recognition accuracy
+2. **File-based duplicate tracking** - monitor.py now properly tracks processed messages in processed_messages.json
+3. **Enhanced scrolling mechanism** - New DiscordBrowserDetector properly handles Discord's virtual scrolling
+4. **Persistent browser context** - Maintains Discord login state across browser restarts
+5. **Environment variable management** - Properly loads configuration from .env file
+6. **Python Playwright** - Browser automation that successfully interacts with Discord (currently used)
+7. **Node.js Puppeteer** - Available as an alternative browser automation option (not currently used)
+
+## What Didn't Work:
+1. **pytesseract** - Had poor accuracy on Discord interface text (replaced with PaddleOCR)
+2. **Basic Discord selectors** - Original selectors failed due to Discord UI changes
+3. **Simple screenshot approach** - Needed enhanced scrolling to get latest messages
+4. **In-memory duplicate tracking** - Reset on every restart, now fixed with file-based tracking
+5. **Non-persistent browser sessions** - Lost login state, now fixed with persistent context
+6. **Node.js Puppeteer** - Available but not currently used in the main Python codebase
+
+## Node.js Helper Functions Loaded:
+- **puppeteer 24.28.0** - Browser automation library (installed as Node.js dependency, though Python Playwright is used in the main codebase instead)
+- **puppeteer-core** - Core Puppeteer functionality
+- **devtools-protocol** - Chrome DevTools Protocol bindings
+- **ws** - WebSocket library for browser communication
+- **extract-zip** - ZIP file extraction utilities
+- Various other Puppeteer dependencies (debug, https-proxy-agent, etc.)

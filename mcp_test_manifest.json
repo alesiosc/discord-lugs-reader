@@ -1,0 +1,64 @@
+{
+  "inputs": [
+    {
+      "file": "mcp_test_inputs\\01_page-2025-11-07T16-16-31-248759Z_processed.png",
+      "basename": "01_page-2025-11-07T16-16-31-248759Z_processed.png",
+      "modified_iso": "2025-11-07T17:02:06"
+    },
+    {
+      "file": "mcp_test_inputs\\02_page-2025-11-07T16-05-51-101953Z_bottom700.png",
+      "basename": "02_page-2025-11-07T16-05-51-101953Z_bottom700.png",
+      "modified_iso": "2025-11-07T17:02:06"
+    },
+    {
+      "file": "mcp_test_inputs\\03_page-2025-11-07T16-05-51-101953Z_bottom700_processed.png",
+      "basename": "03_page-2025-11-07T16-05-51-101953Z_bottom700_processed.png",
+      "modified_iso": "2025-11-07T17:02:06"
+    },
+    {
+      "file": "mcp_test_inputs\\04_page-2025-11-07T16-18-52-319369Z_bottom700.png",
+      "basename": "04_page-2025-11-07T16-18-52-319369Z_bottom700.png",
+      "modified_iso": "2025-11-07T17:01:42"
+    },
+    {
+      "file": "mcp_test_inputs\\05_page-2025-11-07T16-23-40-275883Z_bottom700_bottom700.png",
+      "basename": "05_page-2025-11-07T16-23-40-275883Z_bottom700_bottom700.png",
+      "modified_iso": "2025-11-07T17:01:26"
+    },
+    {
+      "file": "mcp_test_inputs\\06_page-2025-11-07T16-05-50-606777Z_bottom700.png",
+      "basename": "06_page-2025-11-07T16-05-50-606777Z_bottom700.png",
+      "modified_iso": "2025-11-07T17:01:08"
+    },
+    {
+      "file": "mcp_test_inputs\\07_page-2025-11-07T16-18-51-830852Z_bottom700.png",
+      "basename": "07_page-2025-11-07T16-18-51-830852Z_bottom700.png",
+      "modified_iso": "2025-11-07T17:00:46"
+    },
+    {
+      "file": "mcp_test_inputs\\08_page-2025-11-07T16-16-31-801019Z_bottom700.png",
+      "basename": "08_page-2025-11-07T16-16-31-801019Z_bottom700.png",
+      "modified_iso": "2025-11-07T17:00:10"
+    },
+    {
+      "file": "mcp_test_inputs\\09_page-2025-11-07T16-21-11-665696Z_bottom700.png",
+      "basename": "09_page-2025-11-07T16-21-11-665696Z_bottom700.png",
+      "modified_iso": "2025-11-07T16:59:48"
+    },
+    {
+      "file": "mcp_test_inputs\\10_page-2025-11-07T16-16-31-248759Z_bottom700.png",
+      "basename": "10_page-2025-11-07T16-16-31-248759Z_bottom700.png",
+      "modified_iso": "2025-11-07T16:59:10"
+    },
+    {
+      "file": "mcp_test_inputs\\11_page-2025-11-07T16-18-51-830852Z_bottom700_bottom700.png",
+      "basename": "11_page-2025-11-07T16-18-51-830852Z_bottom700_bottom700.png",
+      "modified_iso": "2025-11-07T16:59:10"
+    },
+    {
+      "file": "mcp_test_inputs\\12_page-2025-11-07T16-21-12-194745Z_bottom700.png",
+      "basename": "12_page-2025-11-07T16-21-12-194745Z_bottom700.png",
+      "modified_iso": "2025-11-07T16:58:50"
+    }
+  ]
+}

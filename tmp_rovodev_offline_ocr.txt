@@ -1,0 +1,5 @@
+2025-11-07T20:14:54.576607 | Offline OCR on latest screenshot: screenshots\page-2025-11-07T20-00-42-205285Z_bottom700.png
+2025-11-07T20:18:15.491457 | RAW: No parse, trying bottom-crop...
+2025-11-07T20:21:42.797455 | BOTTOM: No parse
+2025-11-07T20:21:43.022634 | No ticker data parsed from offline run.
+2025-11-07T20:21:43.026634 | DONE
