@@ -308,6 +308,67 @@ class DiscordBrowserDetector:
         except Exception as e:
             logger.warning(f"Could not scroll to latest messages: {e}")
 
+    async def extract_messages_from_api(self):
+        """Fetch messages directly from the Discord API using the browser's auth token."""
+        ticker_data = []
+        try:
+            channel_id = "1399516015070548091"
+            api_url = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=50"
+
+            result = await self.page.evaluate(
+                """async (url) => {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (token) {
+                            const cleanToken = token.replace(/"/g, '');
+                            headers['Authorization'] = cleanToken;
+                        }
+                        const resp = await fetch(url, { headers, credentials: 'include' });
+                        if (!resp.ok) return { error: `HTTP ${resp.status}`, hasToken: !!token };
+                        const msgs = await resp.json();
+                        return { messages: msgs.map(m => m.content) };
+                    } catch(e) { return { error: e.toString() }; }
+                }""",
+                api_url
+            )
+
+            if not result or 'error' in result:
+                logger.warning(f"Discord API fetch failed: {result.get('error', 'unknown')} (hasToken={result.get('hasToken')})")
+                return []
+
+            raw_messages = result.get('messages', [])
+            logger.info(f"Discord API returned {len(raw_messages)} messages")
+
+            for content in raw_messages:
+                if not content:
+                    continue
+                match = re.search(
+                    r'\[([A-Z]+)\].*?Timestamp:\s*([\d/]+\s+[\d:]+\s*[AP]M).*?Mid:\s*([\d.]+|None).*?Lower:\s*([\d.]+|None).*?Upper:\s*([\d.]+|None)',
+                    content, re.IGNORECASE | re.DOTALL
+                )
+                if match:
+                    ttype = match.group(1).upper()
+                    ts = match.group(2).strip()
+                    mid = float(match.group(3)) if match.group(3) != 'None' else 0.0
+                    lower = float(match.group(4)) if match.group(4) != 'None' else 0.0
+                    upper = float(match.group(5)) if match.group(5) != 'None' else 0.0
+                    ticker_data.append({
+                        'type': ttype,
+                        'timestamp': ts,
+                        'mid': mid,
+                        'lower': lower,
+                        'upper': upper
+                    })
+                    logger.info(f"API extracted: [{ttype}] {ts}")
+
+            logger.info(f"API extraction found {len(ticker_data)} tickers")
+
+        except Exception as e:
+            logger.warning(f"Discord API extraction failed: {e}")
+
+        return ticker_data
+
     async def take_screenshot(self):
         """Take a clipped screenshot of the messages area."""
         try:
@@ -625,24 +686,26 @@ class DiscordBrowserDetector:
                 
                 # self.last_messages_hash = current_hash
                 
-                # Take first screenshot at absolute bottom
-                # Ensure bottom and slight settle
+                ticker_data = []
+
+                # Method 1: Discord API extraction (uses browser auth, gets all messages)
+                api_data = await self.extract_messages_from_api()
+                if api_data:
+                    ticker_data.extend(api_data)
+                    logger.info(f"API extraction added {len(api_data)} tickers")
+
+                # Method 2: Screenshot + OCR as fallback/supplement
                 try:
                     await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                     await self.page.wait_for_timeout(500)
                 except Exception as e:
                     logger.info(f"Ensure-bottom before shot failed: {e}")
                 screenshot_path_1 = await self.take_screenshot()
-                if not screenshot_path_1:
-                    logger.error("Failed to take screenshot")
-                    await asyncio.sleep(15)
-                    continue
-
-                # Extract ticker data from the screenshot  
-                ticker_data = []
-                data1 = self.extract_ticker_data_with_ocr(screenshot_path_1)
-                if data1:
-                    ticker_data.extend(data1)
+                if screenshot_path_1:
+                    data1 = self.extract_ticker_data_with_ocr(screenshot_path_1)
+                    if data1:
+                        ticker_data.extend(data1)
+                        logger.info(f"OCR added {len(data1)} tickers")
                 
                 # Deduplicate across all screenshots: only keep the latest ticker for each type
                 if ticker_data:
