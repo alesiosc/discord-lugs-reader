@@ -4,11 +4,11 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from typing import List, Dict
 from dotenv import load_dotenv
-import easyocr
-from PIL import Image, ImageEnhance
-import cv2
-import numpy as np
+import subprocess
+from PIL import Image
 import re
+
+TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -17,30 +17,41 @@ class EnhancedOCR:
     """Crash-resistant OCR wrapper with preprocessing, timeout and parsing helpers."""
 
     def __init__(self, timeout_seconds: int = 30):
-        self.reader = None
         self.timeout = timeout_seconds
-        self._init_easy_ocr()
-
-    def _init_easy_ocr(self):
-        try:
-            # Initialize EasyOCR reader with English language
-            self.reader = easyocr.Reader(['en'])
-            logger.info("EasyOCR initialized with English language.")
-        except Exception as e:
-            logger.error(f"Failed to initialize EasyOCR: {e}")
-            raise
+        logger.info("Tesseract OCR initialized (no PyTorch dependency).")
 
     def _ocr_with_timeout(self, image_input):
-        """Run OCR directly in the main thread with EasyOCR."""
-        if self.reader is None:
-            self._init_easy_ocr()
+        """Run OCR by calling Tesseract directly via subprocess (avoids slow imports)."""
         try:
-            logger.info(f"Calling EasyOCR reader.readtext() on {image_input}")
-            result = self.reader.readtext(image_input)
-            logger.info("EasyOCR reader.readtext() call completed.")
-            return result
+            logger.info(f"Calling Tesseract OCR on {image_input}")
+            # Save to a temp path if it's a PIL image, otherwise use path directly
+            if isinstance(image_input, str):
+                img_path = image_input
+            else:
+                tmp_path = "_ocr_temp.png"
+                image_input.save(tmp_path)
+                img_path = tmp_path
+
+            # Run Tesseract as subprocess
+            result = subprocess.run(
+                [TESSERACT_CMD, img_path, 'stdout', '-l', 'eng',
+                 '--oem', '3', '--psm', '6',
+                 '-c', 'tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/:.,-[] '],
+                capture_output=True, text=True, timeout=180
+            )
+
+            if result.returncode != 0:
+                logger.error(f"Tesseract failed (code {result.returncode}): {result.stderr}")
+                return None
+
+            text = result.stdout.strip()
+            logger.info(f"Tesseract OCR completed. Text length: {len(text)}")
+            return text
+        except subprocess.TimeoutExpired:
+            logger.error("Tesseract OCR timed out after 60s")
+            return None
         except Exception as e:
-            logger.error(f"EasyOCR op failed in main thread: {e}", exc_info=True)
+            logger.error(f"Tesseract OCR failed: {e}", exc_info=True)
             return None
 
     def extract_ticker_data(self, image_path: str) -> List[Dict]:
@@ -63,15 +74,10 @@ class EnhancedOCR:
         return []
 
     def parse_text(self, result) -> str:
-        """Parse text from EasyOCR's output structure."""
+        """Parse text from Tesseract's output (plain string)."""
         if not result:
             return ""
-        
-        parts = []
-        for (bbox, text, prob) in result:
-            parts.append(text)
-        
-        return ' '.join(parts).strip()
+        return str(result).strip()
 
     def extract_ticker_data_from_text(self, text: str) -> List[Dict]:
         """More flexible regex to find ticker data, even if incomplete."""

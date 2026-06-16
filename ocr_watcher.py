@@ -52,7 +52,14 @@ def watch_for_requests():
 
                 # Run the OCR script as a subprocess
                 # Use sys.executable to ensure we use the same Python environment that launched this script
+                # IMPORTANT: Must use python.exe, NOT pythonw.exe, because pythonw.exe suppresses
+                # stdout entirely and subprocess.run(capture_output=True) hangs forever.
                 python_executable = sys.executable
+                if python_executable.lower().endswith('pythonw.exe'):
+                    python_exe = python_executable[:-4] + 'exe'  # pythonw.exe -> python.exe
+                    if os.path.exists(python_exe):
+                        python_executable = python_exe
+                        logging.info(f"Redirected from pythonw.exe to: {python_executable}")
                 ocr_script_path = "run_ocr.py"
                 command = [python_executable, ocr_script_path, image_path]
                 
