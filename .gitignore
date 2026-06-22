@@ -64,6 +64,10 @@ graphify-out/
 
 # OCR IPC
 ocr.request
+ocr.response
+
+# Healer state
+healer_state.json
 
 # Windows reserved names
 [Nn][Uu][Ll]
