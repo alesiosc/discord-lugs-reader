@@ -34,6 +34,13 @@ def watch_for_requests():
             if current_time - watch_for_requests.last_debug_time > 30:
                 logging.info(f"OCR Watcher alive. Checking for request file: {request_file_path}")
                 watch_for_requests.last_debug_time = current_time
+                # Force flush so watchdog's stale check sees real mtime
+                for h in logging.getLogger().handlers:
+                    if hasattr(h, 'flush'):
+                        try:
+                            h.flush()
+                        except Exception:
+                            pass
             
             if request_file_path.exists():
                 logging.info("Request file found. Processing...")
@@ -68,7 +75,7 @@ def watch_for_requests():
                     command,
                     capture_output=True,
                     text=True,
-                    timeout=300
+                    timeout=60
                 )
                 
                 # Log stdout and stderr from the subprocess
@@ -88,9 +95,20 @@ def watch_for_requests():
                     with open(response_file_path, 'w') as f:
                         f.write(process.stdout)
                 
-                # Clean up the request file
-                request_file_path.unlink()
-                logging.info("Request processed. Waiting for next request.")
+                # Clean up the request file (might already be deleted by main.py)
+                try:
+                    if request_file_path.exists():
+                        request_file_path.unlink()
+                        logging.info("Request processed. Waiting for next request.")
+                        # Flush after processing a request
+                        for h in logging.getLogger().handlers:
+                            if hasattr(h, 'flush'):
+                                try:
+                                    h.flush()
+                                except Exception:
+                                    pass
+                except Exception:
+                    pass  # Race: main.py may have already deleted it
 
             # Wait for a short interval before checking again
             time.sleep(1)

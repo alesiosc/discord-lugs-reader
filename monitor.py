@@ -176,11 +176,12 @@ def main():
                     timestamp_match = re.search(r'Timestamp: ([^,]+)', message)
 
                     if disable_dedup:
-                        # Send regardless of prior state
+                        # Send regardless of prior state, but only 1 per cycle
                         formatted_message = format_message(message)
                         if formatted_message:
                             send_to_discord(formatted_message)
                             new_messages_found = True
+                            break  # Only send 1 message per cycle
                         continue
 
                     if msg_type_match and timestamp_match:
@@ -194,9 +195,9 @@ def main():
                             formatted_message = format_message(message)
                             if formatted_message:
                                 send_to_discord(formatted_message)
-                                # Only add to processed if successfully sent
                                 processed_message_keys.add(message_key)
                                 save_processed_messages(processed_message_keys)
+                                break  # Only send 1 message per cycle
                         else:
                             print(f"Message already processed: {message}")
                     else:
@@ -207,9 +208,9 @@ def main():
                             formatted_message = format_message(message)
                             if formatted_message:
                                 send_to_discord(formatted_message)
-                                # Only add to processed if successfully sent
                                 processed_message_keys.add(message)
                                 save_processed_messages(processed_message_keys)
+                                break  # Only send 1 message per cycle
                         else:
                             print(f"Message already processed: {message}")
                 except Exception as e:

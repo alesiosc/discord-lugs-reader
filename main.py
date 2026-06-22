@@ -238,6 +238,8 @@ class DiscordBrowserDetector:
                 headless=headless_mode,
                 viewport={'width': 1920, 'height': 1080},
                 args=[
+                    f'--disable-extensions-except={Path("./dlr_ext").resolve()}',
+                    f'--load-extension={Path("./dlr_ext").resolve()}',
                     "--disable-gpu",
                     "--no-sandbox",
                     "--disable-session-crashed-bubble",
@@ -247,6 +249,16 @@ class DiscordBrowserDetector:
             
             self.page = self.context.pages[0] if self.context.pages else await self.context.new_page()
             logger.info("Page created/retrieved successfully")
+            
+            # Inject Discord auth token before any page loads
+            token_file = Path('./discord_token.txt')
+            if token_file.exists():
+                raw_token = token_file.read_text().strip()
+                if raw_token:
+                    await self.context.add_init_script(f"""
+                        localStorage.setItem('token', '{raw_token}');
+                    """)
+                    logger.info("Injected Discord auth token via init script")
             
             logger.info("=== BROWSER SETUP COMPLETED ===")
             
@@ -309,38 +321,40 @@ class DiscordBrowserDetector:
             logger.warning(f"Could not scroll to latest messages: {e}")
 
     async def extract_messages_from_api(self):
-        """Fetch messages directly from the Discord API using the browser's auth token."""
-        ticker_data = []
+        """Fetch messages directly from the Discord API using saved auth token."""
         try:
+            import requests as sync_requests
+            token_file = Path('./discord_token.txt')
+            if not token_file.exists():
+                logger.warning("No discord_token.txt found")
+                return []
+            
+            token = token_file.read_text().strip()
+            if not token:
+                logger.warning("discord_token.txt is empty")
+                return []
+            
             channel_id = "1399516015070548091"
             api_url = f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=50"
-
-            result = await self.page.evaluate(
-                """async (url) => {
-                    try {
-                        const token = localStorage.getItem('token');
-                        const headers = { 'Content-Type': 'application/json' };
-                        if (token) {
-                            const cleanToken = token.replace(/"/g, '');
-                            headers['Authorization'] = cleanToken;
-                        }
-                        const resp = await fetch(url, { headers, credentials: 'include' });
-                        if (!resp.ok) return { error: `HTTP ${resp.status}`, hasToken: !!token };
-                        const msgs = await resp.json();
-                        return { messages: msgs.map(m => m.content) };
-                    } catch(e) { return { error: e.toString() }; }
-                }""",
-                api_url
-            )
-
-            if not result or 'error' in result:
-                logger.warning(f"Discord API fetch failed: {result.get('error', 'unknown')} (hasToken={result.get('hasToken')})")
+            
+            headers = {
+                'Authorization': token,
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            resp = sync_requests.get(api_url, headers=headers, timeout=15)
+            
+            if resp.status_code != 200:
+                logger.warning(f"Discord API fetch failed: HTTP {resp.status_code}")
                 return []
-
-            raw_messages = result.get('messages', [])
+            
+            raw_messages = resp.json()
             logger.info(f"Discord API returned {len(raw_messages)} messages")
-
-            for content in raw_messages:
+            
+            ticker_data = []
+            for msg in raw_messages:
+                content = msg.get('content', '')
                 if not content:
                     continue
                 match = re.search(
@@ -348,23 +362,25 @@ class DiscordBrowserDetector:
                     content, re.IGNORECASE | re.DOTALL
                 )
                 if match:
-                    ttype = match.group(1).upper()
-                    ts = match.group(2).strip()
-                    mid = float(match.group(3)) if match.group(3) != 'None' else 0.0
-                    lower = float(match.group(4)) if match.group(4) != 'None' else 0.0
-                    upper = float(match.group(5)) if match.group(5) != 'None' else 0.0
+                    ticker_type, timestamp, mid, lower, upper = match.groups()
                     ticker_data.append({
-                        'type': ttype,
-                        'timestamp': ts,
-                        'mid': mid,
-                        'lower': lower,
-                        'upper': upper
+                        'type': ticker_type.upper(),
+                        'timestamp': timestamp,
+                        'mid': float(mid) if mid != 'None' else None,
+                        'lower': float(lower) if lower != 'None' else None,
+                        'upper': float(upper) if upper != 'None' else None
                     })
-                    logger.info(f"API extracted: [{ttype}] {ts}")
-
-            logger.info(f"API extraction found {len(ticker_data)} tickers")
-
+                    logger.info(f"Extracted ticker: [{ticker_type}] at {timestamp}")
+            
+            return ticker_data
+            
         except Exception as e:
+            logger.error(f"Discord API fetch failed: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return []
+
+        async def fetch_messages_from_screenshot(self):
             logger.warning(f"Discord API extraction failed: {e}")
 
         return ticker_data
@@ -868,7 +884,7 @@ def get_latest_messages():
                         if message_match:
                             full_message = message_match.group(1)
                             # Extract the ticker info part from the message
-                            ticker_match = re.search(r'\[([A-Z]+)\].*?Timestamp: ([^,]+), Mid: (None|[\d.]+), Lower: (None|[\d.]+), Upper: (None|[\d.]+)', full_message)
+                            ticker_match = re.search(r'[\[Iil1]([A-Z]+)\].*?Timestamp: ([^,]+), Mid: (None|[\d.]+), Lower: (None|[\d.]+), Upper: (None|[\d.]+)', full_message)
                             if ticker_match:
                                 msg_type = ticker_match.group(1)
                                 timestamp_str = ticker_match.group(2)

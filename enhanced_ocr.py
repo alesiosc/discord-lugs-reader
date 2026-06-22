@@ -18,6 +18,7 @@ class EnhancedOCR:
 
     def __init__(self, timeout_seconds: int = 30):
         self.timeout = timeout_seconds
+        self.tesseract_timeout = 30  # Fast-fail: if Tesseract takes >30s it's hung
         logger.info("Tesseract OCR initialized (no PyTorch dependency).")
 
     def _ocr_with_timeout(self, image_input):
@@ -37,7 +38,7 @@ class EnhancedOCR:
                 [TESSERACT_CMD, img_path, 'stdout', '-l', 'eng',
                  '--oem', '3', '--psm', '6',
                  '-c', 'tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/:.,-[] '],
-                capture_output=True, text=True, timeout=180
+                capture_output=True, text=True, timeout=self.tesseract_timeout
             )
 
             if result.returncode != 0:
@@ -128,6 +129,15 @@ class EnhancedOCR:
         # Debug: Log the text after preprocessing to verify fixes
         logger.info(f"--- TEXT AFTER PREPROCESSING: {text}")
 
+        # Fix "I" misread as "[" bracket — OCR commonly reads "[" as "I" or "l" or "1"
+        # e.g. "INQ]" → "[NQ]", "IES]" → "[ES]", "IRTY]" → "[RTY]"
+        # Also handle cases where bracket is completely missing: "NQ]" → "[NQ]"
+        text = re.sub(r'(?<![A-Za-z])[Iil1]([A-Z]{2,3}\])', r'[\1', text)
+        # Handle "I" at start of ticker where bracket is also missing (e.g. "INQ" without "]")
+        # and handle "NQ]" without opening bracket
+        text = re.sub(r'(?<!\[])([A-Z]{2,3})\]', r'[\1]', text)
+        logger.info(f"--- TEXT AFTER BRACKET FIX: {text}")
+
         # Search for each ticker type individually to avoid complex regex issues
         out = []
         
@@ -137,7 +147,11 @@ class EnhancedOCR:
         
         for ticker_type in ticker_patterns:
             # Look for this specific ticker type
-            ticker_pattern = rf'\[{ticker_type}\][^[]*?Timestamp[^[]*?(?=\[|$)'
+            # OCR commonly misreads '[' as 'I' or 'l' or '1', so accept those too
+            # IMPORTANT: The lookahead must NOT include '1' (digit one) because 
+            # timestamps contain '1's and would truncate the block early.
+            # Use [\[Iil] (without 1) for the next-block lookahead.
+            ticker_pattern = rf'[\[Iil1]{ticker_type}\][^[]*?Timestamp[^[]*?(?=\[|(?<![A-Za-z])[Iil][A-Z]{{2,3}}\]|$)'
             
             ticker_matches = re.finditer(ticker_pattern, text, re.IGNORECASE | re.DOTALL)
             
@@ -160,8 +174,8 @@ class EnhancedOCR:
                 upper_match = re.search(r'Upper\s*[:,\.]*\s*([0-9][0-9,]*\.?[0-9]*)', block_text, re.IGNORECASE)
 
                 def to_float(s):
-                    # Clean up the string: remove commas and trailing punctuation
-                    cleaned = str(s).replace(',', '').rstrip('.,;: ')
+                    # Clean up the string: remove commas and trailing punctuation/dashes
+                    cleaned = str(s).replace(',', '').rstrip('.,;: -')
                     return float(cleaned)
 
                 try:

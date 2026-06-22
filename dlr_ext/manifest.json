@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "DLR Session Keeper",
+  "version": "1.0",
+  "description": "Persists Discord auth token across sessions for DLR",
+  "permissions": [
+    "storage",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "https://discord.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [{
+    "matches": ["https://discord.com/*"],
+    "js": ["content.js"],
+    "run_at": "document_start"
+  }]
+}

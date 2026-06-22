@@ -47,5 +47,23 @@ node_modules/
 tmp_rovodev_*
 0-READ - DO_NOT_CHANGE.md
 
+# Auth tokens and secrets
+discord_token.txt
+token_status.json
+dlr_auth_status.json
+token_debug_dump.bin
+
+# Windows shortcuts
+*.lnk
+
+# Runtime state
+processed_messages.json
+
+# Output directories
+graphify-out/
+
+# OCR IPC
+ocr.request
+
 # Windows reserved names
 [Nn][Uu][Ll]

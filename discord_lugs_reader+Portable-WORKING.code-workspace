@@ -2,6 +2,18 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../FIREBASE_IMAGE_LEVELS_ANALYZER - Copy (7)"
+		},
+		{
+			"path": "../MQ_Liquidity_Summaries - ADDING FINAL LS SCRAPING"
+		},
+		{
+			"path": "../AIO_internals_equities_ma_x3_indicator"
+		},
+		{
+			"path": ".."
 		}
 	],
 	"settings": {}

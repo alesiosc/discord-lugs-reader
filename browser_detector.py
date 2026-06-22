@@ -43,6 +43,9 @@ class DiscordBrowserDetector:
         user_data_dir = Path('./browser_data')
         user_data_dir.mkdir(exist_ok=True)
         
+        # Session-saver extension auto-restores Discord auth token
+        ext_path = Path('./dlr_ext').resolve()
+        
         self.context = await self.playwright.chromium.launch_persistent_context(
             user_data_dir=str(user_data_dir),
             headless=False,  # Set to True after debugging
@@ -51,6 +54,8 @@ class DiscordBrowserDetector:
             timezone_id='America/Los_Angeles',
             permissions=['notifications'],
             args=[
+                f'--disable-extensions-except={ext_path}',
+                f'--load-extension={ext_path}',
                 '--disable-blink-features=AutomationControlled',
                 '--disable-dev-shm-usage',
                 '--no-sandbox',
@@ -67,6 +72,16 @@ class DiscordBrowserDetector:
         await self.page.set_extra_http_headers({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         })
+        
+        # Inject Discord auth token before any page loads
+        token_file = Path('./discord_token.txt')
+        if token_file.exists():
+            raw_token = token_file.read_text().strip()
+            if raw_token:
+                await self.context.add_init_script(f"""
+                    localStorage.setItem('token', '{raw_token}');
+                """)
+                logger.info("Injected Discord auth token via init script")
         
         logger.info("Browser setup completed")
         
