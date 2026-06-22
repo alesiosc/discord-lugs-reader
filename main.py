@@ -268,12 +268,19 @@ class DiscordBrowserDetector:
             raise
         
     async def navigate_to_discord(self):
-        """Navigate to Discord channel."""
+        """Navigate to Discord channel. Fast-fail if blocked (Cloudflare)."""
         try:
             logger.info(f"Navigating to Discord URL: {self.discord_url}")
-            await self.page.goto(self.discord_url, wait_until='domcontentloaded', timeout=60000)
+            # Short timeout — if Cloudflare blocks, fail fast
+            await self.page.goto(self.discord_url, wait_until='domcontentloaded', timeout=15000)
             logger.info("Page loaded.")
-
+            
+            # Quick check — is Discord actually loaded or is it a Cloudflare page?
+            page_title = await self.page.title()
+            if "cloudflare" in page_title.lower() or "challenge" in page_title.lower() or "just a moment" in page_title.lower():
+                logger.warning(f"Cloudflare challenge detected (title='{page_title}') — skipping browser-based extraction")
+                return True  # Don't block — API extraction still works
+            
             # Take an immediate screenshot for debugging startup issues
             try:
                 logger.info("Waiting 5 seconds before debug screenshot...")
@@ -287,7 +294,6 @@ class DiscordBrowserDetector:
             # AGGRESSIVE POPUP HANDLING
             try:
                 logger.info("Attempting to close 'Restore pages' popup by clicking 'Close' button...")
-                # This is a guess for the selector. It might be a button with the text "Close".
                 await self.page.click('button:has-text("Close")', timeout=5000)
                 logger.info("Clicked 'Close' button successfully.")
             except Exception:
@@ -301,8 +307,8 @@ class DiscordBrowserDetector:
             return True
                 
         except Exception as e:
-            logger.error(f"Error navigating to Discord: {e}")
-            return False
+            logger.warning(f"Browser navigation failed (expected if Cloudflare blocked): {e}")
+            return True  # Return True anyway — API extraction still works
 
     async def scroll_to_latest_messages(self):
         """
@@ -704,26 +710,15 @@ class DiscordBrowserDetector:
                 
                 ticker_data = []
 
-                # Method 1: Discord API extraction (uses browser auth, gets all messages)
+                # Discord API extraction (only method needed — bypasses Cloudflare, gets all messages)
                 api_data = await self.extract_messages_from_api()
                 if api_data:
                     ticker_data.extend(api_data)
                     logger.info(f"API extraction added {len(api_data)} tickers")
+                else:
+                    logger.warning("API extraction returned no data — Discord token may be expired")
 
-                # Method 2: Screenshot + OCR as fallback/supplement
-                try:
-                    await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    await self.page.wait_for_timeout(500)
-                except Exception as e:
-                    logger.info(f"Ensure-bottom before shot failed: {e}")
-                screenshot_path_1 = await self.take_screenshot()
-                if screenshot_path_1:
-                    data1 = self.extract_ticker_data_with_ocr(screenshot_path_1)
-                    if data1:
-                        ticker_data.extend(data1)
-                        logger.info(f"OCR added {len(data1)} tickers")
-                
-                # Deduplicate across all screenshots: only keep the latest ticker for each type
+                # Deduplicate across all data: only keep the latest ticker for each type
                 if ticker_data:
                     latest_tickers = {}
                     for ticker in ticker_data:
